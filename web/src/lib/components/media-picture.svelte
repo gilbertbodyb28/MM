@@ -1,0 +1,17 @@
+<script>
+	import { getFullyQualifiedMediaName } from '$lib/utils.js';
+	import { env } from '$env/dynamic/public';
+
+	const apiUrl = env.PUBLIC_API_URL;
+	let { media } = $props();
+</script>
+
+<picture>
+	<source srcset="{apiUrl}/api/v1/static/image/{media.id}.avif" type="image/avif" />
+	<source srcset="{apiUrl}/api/v1/static/image/{media.id}.webp" type="image/webp" />
+	<img
+		alt="{getFullyQualifiedMediaName(media)}'s Poster Image"
+		class="h-full w-full rounded-lg object-cover"
+		src="{apiUrl}/api/v1/static/image/{media.id}.jpg"
+	/>
+</picture>

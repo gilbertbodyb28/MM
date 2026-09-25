@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link href="%sveltekit.assets%/favicon.ico" rel="icon" />
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+		<script>
+			(() => {
+				const fallback = {
+					theme: 'liquid-glass-dark',
+					scope: 'sidebar',
+					intensity: 'frosted'
+				};
+				try {
+					const stored = JSON.parse(localStorage.getItem('mediamanager.appearance') || 'null');
+					let settings = stored;
+					if (stored?.style === 'liquid' || stored?.style === 'figma') {
+						const scopes = Array.isArray(stored.scopes) ? stored.scopes : [];
+						settings = {
+							theme: stored.style === 'liquid' ? 'liquid-glass-dark' : 'glassmorphism',
+							scope: scopes.includes('entire')
+								? 'global'
+								: scopes.includes('sidebar')
+									? 'sidebar'
+									: scopes.includes('discover')
+										? 'discover'
+										: scopes.includes('downloads')
+											? 'downloads'
+											: 'sidebar',
+							intensity: 'frosted'
+						};
+					}
+					const themes = [
+						'light',
+						'dark',
+						'glassmorphism',
+						'liquid-glass-dark',
+						'liquid-glass-light'
+					];
+					const scopes = ['global', 'sidebar', 'discover', 'downloads'];
+					const intensities = ['clear', 'balanced', 'frosted', 'extra-frosted'];
+					const normalized = {
+						theme: themes.includes(settings?.theme) ? settings.theme : fallback.theme,
+						scope: scopes.includes(settings?.scope) ? settings.scope : fallback.scope,
+						intensity: intensities.includes(settings?.intensity)
+							? settings.intensity
+							: fallback.intensity
+					};
+					document.documentElement.dataset.mmTheme = normalized.theme;
+					document.documentElement.dataset.mmScope = normalized.scope;
+					document.documentElement.dataset.glassIntensity = normalized.intensity;
+					const baseMode =
+						normalized.scope === 'global' &&
+						['light', 'liquid-glass-light'].includes(normalized.theme)
+							? 'light'
+							: 'dark';
+					localStorage.setItem('mode-watcher-mode', baseMode);
+					document.documentElement.classList.toggle('dark', baseMode === 'dark');
+					document.documentElement.style.colorScheme = baseMode;
+					const posterSize = localStorage.getItem('mediamanager.poster-size');
+					document.documentElement.dataset.posterSize = ['small', 'medium', 'large'].includes(
+						posterSize
+					)
+						? posterSize
+						: 'medium';
+					const sidebarPreferences = JSON.parse(
+						localStorage.getItem('mediamanager.sidebar-preferences') || 'null'
+					);
+					document.documentElement.dataset.sidebarSize = ['small', 'medium', 'large'].includes(
+						sidebarPreferences?.size
+					)
+						? sidebarPreferences.size
+						: 'medium';
+					document.documentElement.dataset.sidebarIconStyle = ['outline', 'glass'].includes(
+						sidebarPreferences?.iconStyle
+					)
+						? sidebarPreferences.iconStyle
+						: 'glass';
+					const appearancePackages = JSON.parse(
+						localStorage.getItem('mediamanager.appearance-packages') || 'null'
+					);
+					document.documentElement.dataset.themePackage = 'existing-theme';
+					document.documentElement.dataset.iconPackage = 'existing-icons';
+					document.documentElement.dataset.controlPackage = 'existing-controls';
+					document.documentElement.dataset.sidebarPackage = [
+						'existing-sidebar',
+						'figma-sidebar-navigation'
+					].includes(appearancePackages?.sidebar)
+						? appearancePackages.sidebar
+						: 'existing-sidebar';
+				} catch {
+					document.documentElement.dataset.mmTheme = fallback.theme;
+					document.documentElement.dataset.mmScope = fallback.scope;
+					document.documentElement.dataset.glassIntensity = fallback.intensity;
+					document.documentElement.dataset.posterSize = 'medium';
+					document.documentElement.dataset.sidebarSize = 'medium';
+					document.documentElement.dataset.sidebarIconStyle = 'glass';
+					document.documentElement.dataset.themePackage = 'existing-theme';
+					document.documentElement.dataset.iconPackage = 'existing-icons';
+					document.documentElement.dataset.controlPackage = 'existing-controls';
+					document.documentElement.dataset.sidebarPackage = 'existing-sidebar';
+					document.documentElement.classList.add('dark');
+					document.documentElement.style.colorScheme = 'dark';
+				}
+			})();
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

@@ -1,0 +1,54 @@
+.idea
+venv
+MediaManager.iml
+docker-compose.yml
+data/*
+movie/*
+torrent/*
+tv/*
+log.txt
+res/*
+media_manager/indexer/indexers/prowlarr.http
+*.egg-info
+.env
+config
+images
+data
+res
+
+
+
+web/cache/
+web/node_modules
+
+# Output
+web/.output
+web/.vercel
+web/.netlify
+web/.wrangler
+web/.svelte-kit
+web/build
+
+# OS
+web/.DS_Store
+web/Thumbs.db
+
+# Env
+web/.env
+web/.env.*
+web/!.env.example
+web/!.env.test
+
+# Vite
+web/vite.config.js.timestamp-*
+web/vite.config.ts.timestamp-*
+
+# pycache
+__pycache__
+
+# Postgres
+/postgres
+
+# MkDocs
+site/
+.DS_Store

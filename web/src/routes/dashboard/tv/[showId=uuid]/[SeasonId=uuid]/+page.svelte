@@ -1,0 +1,251 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { Separator } from '$lib/components/ui/separator/index.js';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
+	import * as Table from '$lib/components/ui/table/index.js';
+	import type { AutomationJob, PublicEpisodeFile, Season, Show, UserRead } from '$lib/api/api';
+	import CheckmarkX from '$lib/components/checkmark-x.svelte';
+	import { getFullyQualifiedMediaName, getTorrentQualityString } from '$lib/utils';
+	import MediaPicture from '$lib/components/media-picture.svelte';
+	import { resolve } from '$app/paths';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import { getContext, onMount } from 'svelte';
+	import client from '$lib/api';
+	import EpisodeSearchActions from '$lib/components/tv/episode-search-actions.svelte';
+
+	let episodeFiles: PublicEpisodeFile[] = $derived(page.data.files);
+	let season: Season = $derived(page.data.season);
+	let show: Show = $derived(page.data.showData);
+	let user: () => UserRead = getContext('user');
+	let episodeJobs = $state<Record<string, AutomationJob>>({});
+	const episodeDateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
+
+	function formatAirDate(value: string | null | undefined): string {
+		if (!value) return 'Not available';
+		const dateValue = value.slice(0, 10);
+		const parsed = new Date(`${dateValue}T00:00:00`);
+		return Number.isNaN(parsed.getTime()) ? dateValue : episodeDateFormatter.format(parsed);
+	}
+
+	let episodeById = $derived(
+		Object.fromEntries(
+			season.episodes.map((ep) => [ep.id, `E${String(ep.number).padStart(2, '0')}`])
+		)
+	);
+
+	function episodeIsManaged(episodeId: string): boolean {
+		return episodeFiles.some((file) => file.episode_id === episodeId);
+	}
+
+	async function refreshEpisodeJobs() {
+		if (!user().is_superuser || !show.id) return;
+		const { data, response } = await client.GET('/api/v1/automation/jobs', {
+			params: {
+				query: { kind: 'episode', show_id: show.id, limit: 500 }
+			}
+		});
+		if (!response.ok || !data) return;
+		episodeJobs = Object.fromEntries(
+			data.filter((job) => job.episode_id).map((job) => [job.episode_id as string, job])
+		);
+	}
+
+	function updateEpisodeJob(job: AutomationJob) {
+		if (!job.episode_id) return;
+		episodeJobs = { ...episodeJobs, [job.episode_id]: job };
+	}
+
+	onMount(() => {
+		void refreshEpisodeJobs();
+		const interval = window.setInterval(() => void refreshEpisodeJobs(), 4000);
+		return () => window.clearInterval(interval);
+	});
+</script>
+
+<svelte:head>
+	<title>{getFullyQualifiedMediaName(show)} - Season {season.number} - MediaManager</title>
+	<meta
+		content="View episodes and manage downloads for {getFullyQualifiedMediaName(
+			show
+		)} Season {season.number} in MediaManager"
+		name="description"
+	/>
+</svelte:head>
+
+<header class="flex h-16 shrink-0 items-center gap-2">
+	<div class="flex items-center gap-2 px-4">
+		<Sidebar.Trigger class="-ml-1" />
+		<Separator class="mr-2 h-4" orientation="vertical" />
+		<Breadcrumb.Root>
+			<Breadcrumb.List>
+				<Breadcrumb.Item class="hidden md:block">
+					<Breadcrumb.Link href={resolve('/dashboard', {})}>MediaManager</Breadcrumb.Link>
+				</Breadcrumb.Item>
+				<Breadcrumb.Separator class="hidden md:block" />
+				<Breadcrumb.Item>
+					<Breadcrumb.Link href={resolve('/dashboard', {})}>Home</Breadcrumb.Link>
+				</Breadcrumb.Item>
+				<Breadcrumb.Separator class="hidden md:block" />
+				<Breadcrumb.Item>
+					<Breadcrumb.Link href={resolve('/dashboard/tv', {})}>Shows</Breadcrumb.Link>
+				</Breadcrumb.Item>
+				<Breadcrumb.Separator class="hidden md:block" />
+				<Breadcrumb.Item>
+					<Breadcrumb.Link href={resolve('/dashboard/tv/[showId]', { showId: show.id! })}>
+						{show.name}
+						{show.year == null ? '' : '(' + show.year + ')'}
+					</Breadcrumb.Link>
+				</Breadcrumb.Item>
+				<Breadcrumb.Separator class="hidden md:block" />
+				<Breadcrumb.Item>
+					<Breadcrumb.Page>Season {season.number}</Breadcrumb.Page>
+				</Breadcrumb.Item>
+			</Breadcrumb.List>
+		</Breadcrumb.Root>
+	</div>
+</header>
+<h1 class="scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
+	{getFullyQualifiedMediaName(show)} - Season {season.number}
+</h1>
+<main class="mx-auto flex w-full flex-1 flex-col gap-4 p-4 md:max-w-[80em]">
+	<div class="flex flex-col gap-4 md:flex-row md:items-stretch">
+		<div class="w-full overflow-hidden rounded-xl bg-muted/50 md:w-1/3 md:max-w-sm">
+			<MediaPicture media={show} />
+		</div>
+		<div class="h-full w-full flex-auto rounded-xl md:w-1/4">
+			<Card.Root class="h-full w-full">
+				<Card.Content class="flex flex-col gap-6">
+					<div>
+						<Card.Title class="mb-2 text-base">Series Overview</Card.Title>
+						<p class="text-justify text-sm leading-6 hyphens-auto text-muted-foreground">
+							{show.overview}
+						</p>
+					</div>
+					<div class="border-t border-border"></div>
+					<div>
+						<Card.Title class="mb-2 text-base">Season Overview</Card.Title>
+						<p class="text-justify text-sm leading-6 hyphens-auto text-muted-foreground">
+							{season.overview}
+						</p>
+					</div>
+				</Card.Content>
+			</Card.Root>
+		</div>
+		<div
+			class="flex h-full w-full flex-auto flex-col items-center justify-start gap-4 rounded-xl md:w-1/3 md:max-w-[40em]"
+		>
+			<Card.Root class="h-full w-full">
+				<Card.Header>
+					<Card.Title>Season Details</Card.Title>
+					<Card.Description>
+						A list of all downloaded/downloading versions of this season.
+					</Card.Description>
+				</Card.Header>
+				<Card.Content>
+					<Table.Root>
+						<Table.Caption
+							>A list of all downloaded/downloading versions of this season.</Table.Caption
+						>
+						<Table.Header>
+							<Table.Row>
+								<Table.Head>Episode</Table.Head>
+								<Table.Head>Quality</Table.Head>
+								<Table.Head>File Path Suffix</Table.Head>
+								<Table.Head>Imported</Table.Head>
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each episodeFiles as file (file)}
+								<Table.Row>
+									<Table.Cell class="w-[50px]">
+										{episodeById[file.episode_id] ?? 'E??'}
+									</Table.Cell>
+									<Table.Cell class="w-[50px]">
+										{getTorrentQualityString(file.quality)}
+									</Table.Cell>
+									<Table.Cell class="w-[100px]">
+										{file.file_path_suffix}
+									</Table.Cell>
+									<Table.Cell class="w-[10px] font-medium">
+										<CheckmarkX state={file.downloaded} />
+									</Table.Cell>
+								</Table.Row>
+							{:else}
+								<Table.Row>
+									<Table.Cell colspan={4} class="text-center py-6 font-semibold">
+										You haven't downloaded episodes of this season yet.
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</Card.Content>
+			</Card.Root>
+		</div>
+	</div>
+	<div class="flex-1 rounded-xl">
+		<Card.Root class="w-full">
+			<Card.Header>
+				<Card.Title>Episodes</Card.Title>
+				<Card.Description
+					>A list of all episodes for {getFullyQualifiedMediaName(show)} Season {season.number}
+					.
+				</Card.Description>
+			</Card.Header>
+			<Card.Content class="w-full overflow-x-auto">
+				<Table.Root class="w-full table-fixed">
+					<Table.Caption>A list of all episodes.</Table.Caption>
+					<Table.Header>
+						<Table.Row>
+							<Table.Head class="w-[80px]">Number</Table.Head>
+							<Table.Head class="w-[240px]">Title</Table.Head>
+							<Table.Head class="w-[150px]">Air date</Table.Head>
+							<Table.Head>Overview</Table.Head>
+							<Table.Head class="w-[88px] text-center">Search</Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each season.episodes as episode (episode.id)}
+							<Table.Row>
+								<Table.Cell class="w-[100px] font-medium"
+									>E{String(episode.number).padStart(2, '0')}</Table.Cell
+								>
+								<Table.Cell class="min-w-[50px]">{episode.title}</Table.Cell>
+								<Table.Cell class="whitespace-nowrap text-muted-foreground">
+									{#if episode.air_date}
+										<time datetime={episode.air_date}>{formatAirDate(episode.air_date)}</time>
+									{:else}
+										<span>Not available</span>
+									{/if}
+								</Table.Cell>
+								<Table.Cell class="truncate"
+									>{episode.overview || 'No overview available.'}</Table.Cell
+								>
+								<Table.Cell class="w-[88px] p-1 text-center">
+									{#if user().is_superuser && show.id && episode.id}
+										<EpisodeSearchActions
+											episode={{
+												id: episode.id,
+												number: episode.number,
+												title: episode.title,
+												downloaded: episodeIsManaged(episode.id)
+											}}
+											job={episodeJobs[episode.id] ?? null}
+											onJobChange={updateEpisodeJob}
+											seasonNumber={season.number}
+											showId={show.id}
+											showName={show.name}
+										/>
+									{:else}
+										<span class="text-muted-foreground">—</span>
+									{/if}
+								</Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+			</Card.Content>
+		</Card.Root>
+	</div>
+</main>

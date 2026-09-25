@@ -1,0 +1,21 @@
+from pydantic import SecretStr
+from pydantic_settings import BaseSettings
+
+
+class TmdbConfig(BaseSettings):
+    tmdb_relay_url: str = "https://metadata-relay.dorninger.co/tmdb"
+    api_key: SecretStr | None = None
+    access_token: SecretStr | None = None
+    primary_languages: list[str] = []  # ISO 639-1 language codes
+    default_language: str = "en"  # ISO 639-1 language codes
+
+
+class TvdbConfig(BaseSettings):
+    tvdb_relay_url: str = "https://metadata-relay.dorninger.co/tvdb"
+    api_key: SecretStr | None = None
+    pin: SecretStr | None = None
+
+
+class MetadataProviderConfig(BaseSettings):
+    tvdb: TvdbConfig = TvdbConfig()
+    tmdb: TmdbConfig = TmdbConfig()

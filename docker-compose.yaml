@@ -1,0 +1,128 @@
+services:
+  mediamanager:
+    container_name: mediamanager_server
+    image: mediamanager-enhanced:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      args:
+        VERSION: locally-built
+        BASE_PATH: ""
+    ports:
+      - "8000:8000"
+    environment:
+      - CONFIG_DIR=/app/config
+    volumes:
+      # Mount your actual media directories here - these paths should match your config.toml
+      - ./data/:/data/  # Example: change ./data/ to your actual media root
+      # Config folder for application configuration
+      - ./config/:/app/config/
+      # Image folder
+      - ./images/:/data/images/
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    container_name: mediamanager_postgres
+    image: postgres:17
+    restart: unless-stopped
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: MediaManager
+      POSTGRES_DB: MediaManager
+      POSTGRES_PASSWORD: MediaManager
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: mediamanager_prowlarr
+    profiles: ["downloads"]
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Europe/Stockholm}
+    volumes:
+      - ./integrations/prowlarr:/config
+    ports:
+      - "9696:9696"
+    restart: unless-stopped
+
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: mediamanager_jackett
+    profiles: ["jackett"]
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Europe/Stockholm}
+      - AUTO_UPDATE=true
+    volumes:
+      - ./integrations/jackett:/config
+    ports:
+      - "9117:9117"
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: mediamanager_qbittorrent
+    profiles: ["downloads", "jackett"]
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Europe/Stockholm}
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - ./integrations/qbittorrent:/config
+      - ./data/torrents:/data/torrents
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mediamanager_ollama
+    profiles: ["ai"]
+    volumes:
+      - ./integrations/ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: mediamanager_tautulli
+    profiles: ["ai"]
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Europe/Stockholm}
+    volumes:
+      - ./integrations/tautulli:/config
+    ports:
+      - "8181:8181"
+    restart: unless-stopped
+
+  metadata-relay:
+    image: mediamanager-metadata-relay:local
+    build:
+      context: ./metadata_relay
+      dockerfile: Dockerfile
+      args:
+        VERSION: locally-built
+    container_name: mediamanager_metadata_relay
+    profiles: ["discover-relay"]
+    environment:
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - TVDB_API_KEY=${TVDB_API_KEY:-}
+    ports:
+      - "8010:8000"
+    restart: unless-stopped

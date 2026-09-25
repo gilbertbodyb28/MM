@@ -1,0 +1,50 @@
+[project]
+name = "mediamanager"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "bencoder>=0.2.0",
+    "cachetools>=6.0.0",
+    "fastapi[standard]>=0.115.12",
+    "fastapi-restful[all]>=0.6.0",
+    "fastapi-users[sqlalchemy]>=15.0.2",
+    "httpx>=0.28.1",
+    "httpx-oauth>=0.16.1",
+    "jsonschema>=4.24.0",
+    "patool>=4.0.1",
+    "psycopg[binary,pool]>=3.2.9",
+    "pydantic>=2.11.5",
+    "pydantic-settings[toml]>=2.9.1",
+    "python-json-logger>=3.3.0",
+    "qbittorrent-api>=2025.5.0",
+    "requests>=2.32.3",
+    "sqlalchemy>=2.0.41",
+    "starlette>=0.49.1",
+    "tmdbsimple>=2.9.1",
+    "tvdb-v4-official>=1.1.0",
+    "typing-inspect>=0.9.0",
+    "uvicorn>=0.46.0",
+    "fastapi-utils>=0.8.0",
+    "taskiq>=0.12.0",
+    "taskiq-fastapi>=0.4.0",
+    "taskiq-postgresql[psycopg]>=0.4.0",
+    "alembic>=1.16.1",
+    "pytest>=8.4.0",
+    "pillow>=11.3.0",
+    "sabnzbd-api>=0.1.2",
+    "transmission-rpc>=7.0.11",
+    "pathvalidate>=3.3.1",
+    "asgi-correlation-id>=4.3.4",
+    "torf>=4.3.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "ty>=0.0.33",
+]
+
+[tool.setuptools.packages.find]
+include = ["media_manager*"]
+exclude = ["web*", "Writerside*", "metadata_relay*", "tests*"]

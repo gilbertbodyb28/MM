@@ -1,0 +1,238 @@
+# MediaManager Example Configuration File
+# This file contains all available configuration options for MediaManager
+# Documentation: https://maxdorninger.github.io/MediaManager/
+#
+# This is an example configuration file that gets copied to your config folder
+# on first boot. You should modify the values below to match your setup.
+
+[misc]
+# it's very likely that you need to change this for MediaManager to work
+frontend_url = "http://localhost:8000" # note the lack of a trailing slash
+cors_urls = ["http://localhost:8000"] # note the lack of a trailing slash
+
+image_directory = "/data/images"
+tv_directory = "/data/tv"
+movie_directory = "/data/movies"
+torrent_directory = "/data/torrents" # this is where MediaManager will search for the downloaded torrents and usenet files
+
+# you probaly don't need to change this
+development = false
+
+# Custom Media Libraries
+# These paths should match your volume mounts in docker-compose.yaml
+# Example: if you mount "./movies:/media/movies" then use path = "/media/movies/subdirectory"
+[[misc.tv_libraries]]
+name = "Live Action"
+path = "/data/tv/live-action"  # Change this to match your actual TV shows location
+
+[[misc.movie_libraries]]
+name = "Documentary"
+path = "/data/movies/documentary"  # Change this to match your actual movies location
+
+[database]
+host = "db"
+port = 5432
+user = "MediaManager"
+password = "MediaManager"
+dbname = "MediaManager"
+
+[auth]
+email_password_resets = false # if true, you also need to set up SMTP (notifications.smtp_config)
+registration_enabled = false # if false, the sign-up page is disabled and OIDC will not auto-create new users
+
+token_secret = "CHANGE_ME_GENERATE_RANDOM_STRING" # generate a random string with "openssl rand -hex 32", e.g. here https://www.cryptool.org/en/cto/openssl/
+session_lifetime = 86400  # this is how long you will be logged in after loggin in, in seconds
+
+# Admin users: Users who register with these email addresses will automatically become administrators
+# If no users exist in the database, a default admin user will be created with the first email in this list
+admin_emails = ["admin@example.com", "admin2@example.com"]
+
+# OpenID Connect settings
+[auth.openid_connect]
+enabled = false
+client_id = ""
+client_secret = ""
+configuration_endpoint = "https://openid.example.com/.well-known/openid-configuration"
+name = "OpenID"
+
+[notifications]
+# SMTP settings for email notifications and email password resets
+[notifications.smtp_config]
+smtp_host = "smtp.example.com"
+smtp_port = 587
+smtp_user = "admin"
+smtp_password = "admin"
+from_email = "mediamanager@example.com"
+use_tls = true
+
+# Email notification settings
+[notifications.email_notifications]
+enabled = false
+emails = ["admin@example.com", "admin2@example.com"]  # List of email addresses to send notifications to
+
+# Gotify notification settings
+[notifications.gotify]
+enabled = false
+api_key = ""
+url = "https://gotify.example.com"
+
+# Ntfy notification settings
+[notifications.ntfy]
+enabled = false
+url = "https://ntfy.sh/your-topic"
+
+# Pushover notification settings
+[notifications.pushover]
+enabled = false
+api_key = ""
+user = ""
+
+[torrents]
+# qBittorrent settings
+[torrents.qbittorrent]
+enabled = false
+host = "http://localhost"
+port = 8080
+username = "admin"
+password = "admin"
+category_name = "MediaManager"
+category_save_path = "/data/torrents"
+
+# Transmission settings
+[torrents.transmission]
+enabled = false
+username = "admin"
+password = "admin"
+https_enabled = true
+host = "localhost"
+port = 9091
+path = "/transmission/rpc" # RPC request path target, usually "/transmission/rpc"
+
+# SABnzbd settings
+[torrents.sabnzbd]
+enabled = false
+host = "http://localhost"
+port = 8080
+api_key = ""
+base_path = "/api"
+
+[indexers]
+# Prowlarr settings
+[indexers.prowlarr]
+enabled = false
+url = "http://localhost:9696"
+api_key = ""
+timeout_seconds = 60
+max_results = 1000 # Maximum results retained per indexer search (1-1000)
+
+# Jackett settings
+[indexers.jackett]
+enabled = false
+url = "http://localhost:9117"
+api_key = ""
+indexers = ["1337x", "torrentleech"]  # List of indexer names to use
+timeout_seconds = 60
+max_results = 1000 # Maximum results retained per indexer search (1-1000)
+
+# Title-based scoring rules
+[[indexers.title_scoring_rules]]
+name = "prefer_h265"
+keywords = ["h265", "hevc", "x265", "h.265", "x.265"]
+score_modifier = 100
+negate = false
+
+[[indexers.title_scoring_rules]]
+name = "avoid_cam"
+keywords = ["cam", "camrip", "bdscr", "ddc", "dvdscreener","dvdscr", "hdcam", "hdtc", "hdts", "scr", "screener","telesync", "ts", "webscreener", "tc", "telecine", "tvrip"]
+score_modifier = -10000
+negate = false
+
+# Indexer flag-based scoring rules
+[[indexers.indexer_flag_scoring_rules]]
+name = "prefer_freeleech"
+flags = ["freeleech", "freeleech75"]
+score_modifier = 100
+negate = false
+
+[[indexers.indexer_flag_scoring_rules]]
+name = "reject_nuked"
+flags = ["nuked"]
+score_modifier = -10000
+negate = false
+
+# Scoring rulesets
+[[indexers.scoring_rule_sets]]
+name = "default"
+libraries = ["ALL_TV", "ALL_MOVIES"]
+rule_names = ["prefer_h265", "avoid_cam", "reject_nuked", "prefer_freeleech"]
+
+# Automatic search and download pipeline. Enable this only after configuring
+# at least one indexer and one matching download client above.
+[automation]
+enabled = false
+auto_download_movies = true
+auto_download_shows = true
+continuous_download_enabled = true
+include_specials = false
+process_batch_size = 5
+max_releases_per_show_cycle = 50
+max_attempts = 6
+base_backoff_seconds = 300
+max_backoff_seconds = 21600
+exhausted_retry_seconds = 86400
+lease_timeout_seconds = 1800
+
+# Personal recommendations. User mappings are added after a MediaManager user
+# exists; see the recommendation documentation for the complete TOML block.
+[recommendations]
+enabled = false
+history_provider = "auto"
+refresh_interval_minutes = 360
+refresh_lease_timeout_seconds = 3600
+history_page_size = 100
+max_history_items_per_sync = 1000
+prompt_history_items = 150
+metadata_enrichment_limit = 25
+recommendation_count = 20
+minimum_history_items = 3
+recommendation_ttl_hours = 168
+generate_on_webhook = false
+max_webhook_payload_bytes = 1000000
+users = []
+
+[recommendations.tautulli]
+enabled = false
+url = "http://tautulli:8181"
+api_key = ""
+verify_ssl = true
+request_timeout_seconds = 20
+
+[recommendations.plex]
+enabled = false
+url = "http://plex:32400"
+token = ""
+verify_ssl = true
+request_timeout_seconds = 20
+webhook_enabled = false
+webhook_secret = ""
+server_uuid = ""
+
+[recommendations.ollama]
+enabled = false
+url = "http://ollama:11434"
+model = "llama3.2"
+api_key = ""
+verify_ssl = true
+request_timeout_seconds = 120
+keep_alive = "5m"
+max_response_bytes = 1000000
+
+# its very unlikely that you need to change this
+[metadata]
+[metadata.tmdb]
+tmdb_relay_url = "https://metadata-relay.dorninger.co/tmdb"
+primary_languages = [""]
+default_language = "en"
+
+[metadata.tvdb]
+tvdb_relay_url = "https://metadata-relay.dorninger.co/tvdb"

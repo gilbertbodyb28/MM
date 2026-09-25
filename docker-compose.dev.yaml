@@ -1,0 +1,183 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    container_name: postgres
+    volumes:
+      - ./res/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: MediaManager
+      POSTGRES_DB: MediaManager
+      POSTGRES_PASSWORD: MediaManager
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  mediamanager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+      args:
+        - VERSION=locally-built
+        - BASE_PATH=
+    container_name: mediamanager
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - CONFIG_DIR=/app/config
+      - MEDIAMANAGER_MISC__DEVELOPMENT=TRUE
+      - MEDIAMANAGER_MISC__CORS_URLS=["http://localhost:5173"]
+      - DISABLE_FRONTEND_MOUNT=TRUE
+      - LOG_FILE=/dev/null
+      - MEDIAMANAGER_LOG_LEVEL=DEBUG
+    volumes:
+      #- ./web/build:/app/web/build # this is only needed to test built frontend when developing frontend
+      - ./res/images/:/data/images/
+      - ./res/:/data/
+      - ./res/config/:/app/config/
+      - ./media_manager:/app/media_manager
+    depends_on:
+      db:
+        condition: service_healthy
+  frontend:
+    image: node:24-alpine
+    container_name: mediamanager-frontend-dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      - VITE_API_PROXY_TARGET=http://mediamanager:8000
+    ports:
+      - "5173:5173"
+      - "24678:24678"
+    volumes:
+      - ./web:/app
+    depends_on:
+      - mediamanager
+  docs:
+    image: squidfunk/mkdocs-material:9
+    container_name: mediamanager-docs
+    volumes:
+      - .:/docs
+    ports:
+      - "9000:9000"
+    command: serve -w /docs -a 0.0.0.0:9000
+
+
+# ----------------------------
+# Additional services can be uncommented and configured as needed
+# ----------------------------
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ./res/prowlarr:/config
+    restart: unless-stopped
+    ports:
+      - "9696:9696"
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - TZ=Etc/UTC
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+    volumes:
+      # Must match torrents.qbittorrent.category_save_path and MediaManager's
+      # misc.torrent_directory so completed downloads can be imported.
+      - ./res/torrents:/data/torrents
+      - ./res/qbittorrent:/config
+#  transmission:
+#    image: lscr.io/linuxserver/transmission:latest
+#    container_name: transmission
+#    environment:
+#      - PUID=1000
+#      - PGID=1000
+#      - TZ=Etc/UTC
+#      - USER=admin
+#      - PASS=admin
+#    volumes:
+#      - ./res/transmission:/config
+#      - ./res/torrents:/data/torrents
+#    ports:
+#      - 9091:9091
+#    restart: unless-stopped
+#  pocket-id:
+#    image: ghcr.io/pocket-id/pocket-id
+#    restart: unless-stopped
+#    env_file: .env
+#    ports:
+#      - 1411:1411
+#    volumes:
+#      - ./res/pocket-id:/app/data
+#    healthcheck:
+#      test: "curl -f http://localhost:1411/healthz"
+#      interval: 1m30s
+#      timeout: 5s
+#      retries: 2
+#      start_period: 10s
+#  sabnzbd:
+#    image: lscr.io/linuxserver/sabnzbd:latest
+#    container_name: sabnzbd
+#    environment:
+#      - PUID=1000
+#      - PGID=1000
+#      - TZ=Etc/UTC
+#    volumes:
+#      - ./res/sabnzbd:/config
+#      - ./res/torrents:/downloads
+#    ports:
+#      - 8081:8080
+#    restart: unless-stopped
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - AUTO_UPDATE=true
+    volumes:
+      - ./res/jackett/data:/config
+      - ./res/jackett/torrents:/downloads
+    ports:
+      - 9117:9117
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    profiles: ["ai"]
+    volumes:
+      - ./res/ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    profiles: ["ai"]
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ./res/tautulli:/config
+    ports:
+      - "8181:8181"
+    restart: unless-stopped
