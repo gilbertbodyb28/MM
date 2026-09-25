@@ -162,7 +162,7 @@ Databasmigreringar körs automatiskt vid containerstart. Discover syns i huvudme
 
 Scannern kontrollerar alla TV-serier i biblioteket varje timme och skickar nya avsnitt till nedladdningstjänsten (qBittorrent, Transmission eller SABnzbd) via de anslutna indexerarna (Prowlarr eller Jackett). Den körs i MediaManager-servern, så den fungerar även när webbsidan är stängd.
 
-Öppna **TV Shows → Avsnittsscanner** i sidomenyn. Där finns:
+Öppna fliken **Avsnittsscanner** i sidomenyn. Där finns:
 
 - **Automatisk scanning** – reglaget som slår på eller av den timvisa scanningen (på från början);
 - **Scanna nu** – startar en scanning direkt, även när automatisk scanning är avstängd;
@@ -216,7 +216,7 @@ Uppdateringen innehåller en databasmigrering som körs automatiskt när contain
    docker compose logs -f mediamanager | grep -i "episode scan"
    ```
 
-   Den första scanningen startar inom några minuter efter omstarten. Öppna sedan **TV Shows → Avsnittsscanner** för att se resultatet.
+   Den första scanningen startar inom några minuter efter omstarten. Öppna sedan fliken **Avsnittsscanner** i sidomenyn för att se resultatet.
 
 ## Dokumentation
 

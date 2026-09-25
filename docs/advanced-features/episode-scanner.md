@@ -10,7 +10,7 @@ indexers (Prowlarr or Jackett) to the configured download client
 (qBittorrent, Transmission or SABnzbd). It runs inside the MediaManager
 backend, so it keeps working when no browser has the page open.
 
-Open **TV Shows → Avsnittsscanner** (`/dashboard/tv/scanner`) to see:
+Open **Avsnittsscanner** in the sidebar (`/dashboard/episode-scanner`) to see:
 
 - when the last scan ran, how long it took and whether it had errors;
 - when the next scheduled scan starts;

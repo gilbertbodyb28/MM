@@ -11,6 +11,7 @@
 		Info,
 		LifeBuoy,
 		ListVideo,
+		Radar,
 		Settings,
 		TvIcon
 	} from 'lucide-svelte';
@@ -56,6 +57,13 @@
 				adminOnly: true
 			},
 			{
+				title: 'Avsnittsscanner',
+				url: resolve('/dashboard/episode-scanner', {}),
+				icon: Radar,
+				isActive: true,
+				adminOnly: false
+			},
+			{
 				title: 'Calendar',
 				url: resolve('/dashboard/calendar', {}),
 				icon: CalendarDays,
@@ -76,10 +84,6 @@
 					{
 						title: 'Torrents',
 						url: resolve('/dashboard/tv/torrents', {})
-					},
-					{
-						title: 'Avsnittsscanner',
-						url: resolve('/dashboard/tv/scanner', {})
 					}
 				]
 			},

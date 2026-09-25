@@ -268,10 +268,6 @@
 					<Breadcrumb.Link href={resolve('/dashboard', {})}>MediaManager</Breadcrumb.Link>
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator class="hidden md:block" />
-				<Breadcrumb.Item class="hidden md:block">
-					<Breadcrumb.Link href={resolve('/dashboard/tv', {})}>Shows</Breadcrumb.Link>
-				</Breadcrumb.Item>
-				<Breadcrumb.Separator class="hidden md:block" />
 				<Breadcrumb.Item>
 					<Breadcrumb.Page>Avsnittsscanner</Breadcrumb.Page>
 				</Breadcrumb.Item>

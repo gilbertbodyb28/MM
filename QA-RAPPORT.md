@@ -74,6 +74,7 @@ Helhetstest mot riktig FastAPI/PostgreSQL-backend med lokala test-tjänster för
 - Ett indexerarfel (HTTP 429) visades tydligt för den serien medan övriga serier kontrollerades som vanligt.
 - `Scanna nu` startade en scanning (202) och ett andra klick under pågående scanning avvisades (409). Reglaget för automatisk scanning slog av och på schemat.
 - Hjärtslaget förnyades medan en långsam indexerare svarade.
+- Avsnittsscannern är en egen flik i sidomenyn (inte under TV Shows) med adressen `/dashboard/episode-scanner`; fliken markeras som aktiv när sidan är öppen.
 - Sidan fungerar i 1440 px och 390 px bredd utan horisontell overflow:
   - `artifacts/ui-qa/episode-scanner.png`
   - `artifacts/ui-qa/episode-scanner-mobile.png`
