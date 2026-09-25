@@ -31,6 +31,24 @@ def sanitize_url_for_logging(url: str) -> str:
     return urlunsplit((parsed.scheme, netloc, path, "", ""))
 
 
+_URL_PATTERN = re.compile(r"https?://[^\s'\"<>]+")
+_SECRET_PARAMETER_PATTERN = re.compile(
+    r"(?i)\b(api[_-]?key|apikey|passkey|token|password|secret)=([^&\s'\"]+)"
+)
+
+
+def redact_secrets(text: str) -> str:
+    """Strip URL queries, URL credentials and key=value secrets from free text.
+
+    Exception messages from HTTP clients often embed the full request URL,
+    which for Jackett and many trackers includes an API key or passkey.
+    """
+    text = _URL_PATTERN.sub(
+        lambda match: sanitize_url_for_logging(match.group(0)), text
+    )
+    return _SECRET_PARAMETER_PATTERN.sub(lambda match: f"{match.group(1)}=***", text)
+
+
 def evaluate_indexer_query_result(
     query_result: IndexerQueryResult, ruleset: ScoringRuleSet
 ) -> tuple[IndexerQueryResult, bool]:

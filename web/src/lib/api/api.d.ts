@@ -1102,6 +1102,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/episode-scanner/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Episode Scan Status
+         * @description Latest scan, next scheduled scan and the episodes that were handled.
+         */
+        get: operations["get_episode_scan_status_api_v1_episode_scanner_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episode-scanner/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Episode Scan Settings
+         * @description Turn automatic hourly scanning on or off.
+         */
+        put: operations["update_episode_scan_settings_api_v1_episode_scanner_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episode-scanner/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Episode Scan
+         * @description Start a scan now ("Scanna nu"), whether or not automatic scanning is on.
+         */
+        post: operations["start_episode_scan_api_v1_episode_scanner_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discover": {
         parameters: {
             query?: never;
@@ -2079,6 +2139,160 @@ export interface components {
             /** Air Date */
             air_date?: string | null;
         };
+        /** EpisodeScanItem */
+        EpisodeScanItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Show Id */
+            show_id?: string | null;
+            /** Episode Id */
+            episode_id?: string | null;
+            /** Show Name */
+            show_name?: string | null;
+            /** Season Number */
+            season_number?: number | null;
+            /** Episode Number */
+            episode_number?: number | null;
+            /** Episode Title */
+            episode_title?: string | null;
+            /** Air Date */
+            air_date?: string | null;
+            outcome: components["schemas"]["EpisodeScanOutcome"];
+            reason?: components["schemas"]["EpisodeScanReason"] | null;
+            /** Release Title */
+            release_title?: string | null;
+            /** Indexer */
+            indexer?: string | null;
+            /** Message */
+            message?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+        };
+        /**
+         * EpisodeScanOutcome
+         * @enum {string}
+         */
+        EpisodeScanOutcome: "sent" | "skipped" | "not_found" | "error";
+        /**
+         * EpisodeScanReason
+         * @enum {string}
+         */
+        EpisodeScanReason: "in_library" | "downloading" | "queued" | "in_download_client" | "not_monitored" | "season_not_monitored" | "configuration" | "search" | "download" | "unexpected";
+        /** EpisodeScanRun */
+        EpisodeScanRun: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            trigger: components["schemas"]["EpisodeScanTrigger"];
+            status: components["schemas"]["EpisodeScanRunStatus"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Heartbeat At
+             * Format: date-time
+             */
+            heartbeat_at: string;
+            /** Finished At */
+            finished_at?: string | null;
+            /**
+             * Shows Total
+             * @default 0
+             */
+            shows_total: number;
+            /**
+             * Shows Checked
+             * @default 0
+             */
+            shows_checked: number;
+            /**
+             * Shows Failed
+             * @default 0
+             */
+            shows_failed: number;
+            /**
+             * Episodes Found
+             * @default 0
+             */
+            episodes_found: number;
+            /**
+             * Episodes Sent
+             * @default 0
+             */
+            episodes_sent: number;
+            /**
+             * Episodes Skipped
+             * @default 0
+             */
+            episodes_skipped: number;
+            /**
+             * Episodes Not Found
+             * @default 0
+             */
+            episodes_not_found: number;
+            /**
+             * Errors
+             * @default 0
+             */
+            errors: number;
+            /** Message */
+            message?: string | null;
+        };
+        /**
+         * EpisodeScanRunStatus
+         * @enum {string}
+         */
+        EpisodeScanRunStatus: "running" | "succeeded" | "completed_with_errors" | "failed" | "interrupted";
+        /** EpisodeScanSettingsUpdate */
+        EpisodeScanSettingsUpdate: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** EpisodeScanStatus */
+        EpisodeScanStatus: {
+            /** Enabled */
+            enabled: boolean;
+            /** Interval Minutes */
+            interval_minutes: number;
+            /** Lookback Days */
+            lookback_days: number;
+            /** Running */
+            running: boolean;
+            /** Next Scan At */
+            next_scan_at: string | null;
+            /**
+             * Server Time
+             * Format: date-time
+             */
+            server_time: string;
+            latest_run?: components["schemas"]["EpisodeScanRun"] | null;
+            /** Latest Items */
+            latest_items?: components["schemas"]["EpisodeScanItem"][];
+            /** Recent Sent */
+            recent_sent?: components["schemas"]["EpisodeScanItem"][];
+            /** Recent Runs */
+            recent_runs?: components["schemas"]["EpisodeScanRun"][];
+        };
+        /**
+         * EpisodeScanTrigger
+         * @enum {string}
+         */
+        EpisodeScanTrigger: "scheduled" | "manual";
         /** ErrorModel */
         ErrorModel: {
             /** Detail */
@@ -3712,6 +3926,14 @@ export type DiscoverMediaItem = components['schemas']['DiscoverMediaItem'];
 export type DiscoverPage = components['schemas']['DiscoverPage'];
 export type DiscoverSort = components['schemas']['DiscoverSort'];
 export type Episode = components['schemas']['Episode'];
+export type EpisodeScanItem = components['schemas']['EpisodeScanItem'];
+export type EpisodeScanOutcome = components['schemas']['EpisodeScanOutcome'];
+export type EpisodeScanReason = components['schemas']['EpisodeScanReason'];
+export type EpisodeScanRun = components['schemas']['EpisodeScanRun'];
+export type EpisodeScanRunStatus = components['schemas']['EpisodeScanRunStatus'];
+export type EpisodeScanSettingsUpdate = components['schemas']['EpisodeScanSettingsUpdate'];
+export type EpisodeScanStatus = components['schemas']['EpisodeScanStatus'];
+export type EpisodeScanTrigger = components['schemas']['EpisodeScanTrigger'];
 export type ErrorModel = components['schemas']['ErrorModel'];
 export type HttpValidationError = components['schemas']['HTTPValidationError'];
 export type HistorySource = components['schemas']['HistorySource'];
@@ -6002,6 +6224,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_episode_scan_status_api_v1_episode_scanner_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeScanStatus"];
+                };
+            };
+        };
+    };
+    update_episode_scan_settings_api_v1_episode_scanner_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EpisodeScanSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeScanStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_episode_scan_api_v1_episode_scanner_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeScanStatus"];
                 };
             };
         };

@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from requests import Response, Session
 
 from media_manager.config import MediaManagerConfig
-from media_manager.indexer.indexers.generic import GenericIndexer
+from media_manager.indexer.indexers.generic import (
+    GenericIndexer,
+    describe_indexer_failure,
+)
 from media_manager.indexer.indexers.torznab_mixin import TorznabMixin
 from media_manager.indexer.schemas import IndexerQueryResult
 from media_manager.movies.schemas import Movie
@@ -137,6 +140,7 @@ class Prowlarr(GenericIndexer, TorznabMixin):
                 indexer.name,
                 type(error).__name__,
             )
+            self.record_tolerated_failure(describe_indexer_failure(indexer.name, error))
             return []
 
     def search(self, query: str, is_tv: bool) -> list[IndexerQueryResult]:

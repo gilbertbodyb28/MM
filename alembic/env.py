@@ -30,6 +30,11 @@ from media_manager.auth.db import OAuthAccount, User  # noqa: E402
 from media_manager.automation.models import AutomationJob  # noqa: E402
 from media_manager.config import MediaManagerConfig  # noqa: E402
 from media_manager.database import Base  # noqa: E402
+from media_manager.episode_scanner.models import (  # noqa: E402
+    EpisodeScanItem,
+    EpisodeScanRun,
+    EpisodeScanSettings,
+)
 from media_manager.indexer.models import IndexerQueryResult  # noqa: E402
 from media_manager.movies.models import Movie, MovieFile  # noqa: E402
 from media_manager.notification.models import Notification  # noqa: E402
@@ -58,6 +63,9 @@ __all__ = [
     "AutomationJob",
     "Episode",
     "EpisodeFile",
+    "EpisodeScanItem",
+    "EpisodeScanRun",
+    "EpisodeScanSettings",
     "IndexerQueryResult",
     "MediaRecommendation",
     "Movie",

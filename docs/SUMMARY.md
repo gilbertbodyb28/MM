@@ -11,6 +11,7 @@
   * [Follow symlinks in frontend files](advanced-features/follow-symlinks-in-frontend-files.md)
   * [Metadata Provider Configuration](advanced-features/metadata-provider-configuration.md)
   * [Automatic Downloads](advanced-features/automatic-downloads.md)
+  * [Episode Scanner](advanced-features/episode-scanner.md)
   * [Discover](advanced-features/discover.md)
   * [Personal AI Recommendations](advanced-features/personal-recommendations.md)
   * [qBittorrent Category](advanced-features/qbittorrent-category.md)

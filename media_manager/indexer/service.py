@@ -7,6 +7,7 @@ from media_manager.indexer.indexers.jackett import Jackett
 from media_manager.indexer.indexers.prowlarr import Prowlarr
 from media_manager.indexer.repository import IndexerRepository
 from media_manager.indexer.schemas import IndexerQueryResult, IndexerQueryResultId
+from media_manager.indexer.utils import redact_secrets
 from media_manager.movies.schemas import Movie
 from media_manager.torrent.utils import remove_special_chars_and_parentheses
 from media_manager.tv.schemas import Show
@@ -19,6 +20,9 @@ class IndexerService:
         config = MediaManagerConfig()
         self.repository = indexer_repository
         self.indexers: list[GenericIndexer] = []
+        # Searches keep going when one indexer fails; callers that need to
+        # report those failures (such as the episode scanner) read them here.
+        self.search_errors: list[str] = []
 
         if config.indexers.prowlarr.enabled:
             self.indexers.append(Prowlarr())
@@ -48,10 +52,13 @@ class IndexerService:
                 log.debug(
                     f"Indexer {indexer.__class__.__name__} returned {len(indexer_results)} results for query: {query}"
                 )
-            except Exception:
+            except Exception as error:
                 log.exception(
                     f"Indexer {indexer.__class__.__name__} failed for query '{query}'"
                 )
+                self._record_search_error(indexer, error)
+            finally:
+                self._collect_tolerated_failures(indexer)
 
         return await self._deduplicate_and_save(results)
 
@@ -67,10 +74,13 @@ class IndexerService:
                 )
                 if indexer_results:
                     results.extend(self._bounded_results(indexer, indexer_results))
-            except Exception:
+            except Exception as error:
                 log.exception(
                     f"Indexer {indexer.__class__.__name__} failed for movie search '{query}'"
                 )
+                self._record_search_error(indexer, error)
+            finally:
+                self._collect_tolerated_failures(indexer)
 
         return await self._deduplicate_and_save(results)
 
@@ -91,10 +101,13 @@ class IndexerService:
                 )
                 if indexer_results:
                     results.extend(self._bounded_results(indexer, indexer_results))
-            except Exception:
+            except Exception as error:
                 log.exception(
                     f"Indexer {indexer.__class__.__name__} failed for season search '{query}'"
                 )
+                self._record_search_error(indexer, error)
+            finally:
+                self._collect_tolerated_failures(indexer)
 
         return await self._deduplicate_and_save(results)
 
@@ -121,14 +134,38 @@ class IndexerService:
                 )
                 if indexer_results:
                     results.extend(self._bounded_results(indexer, indexer_results))
-            except Exception:
+            except Exception as error:
                 log.exception(
                     "Indexer %s failed for episode search '%s'",
                     indexer.__class__.__name__,
                     query,
                 )
+                self._record_search_error(indexer, error)
+            finally:
+                self._collect_tolerated_failures(indexer)
 
         return await self._deduplicate_and_save(results)
+
+    def pop_search_errors(self) -> list[str]:
+        """Return and clear indexer failures recorded since the last call."""
+        errors, self.search_errors = self.search_errors, []
+        return errors
+
+    def _collect_tolerated_failures(self, indexer: GenericIndexer) -> None:
+        pop_failures = getattr(indexer, "pop_tolerated_failures", None)
+        if pop_failures is None:
+            return
+        self.search_errors.extend(
+            f"{indexer.__class__.__name__}: {failure}" for failure in pop_failures()
+        )
+
+    def _record_search_error(self, indexer: GenericIndexer, error: Exception) -> None:
+        detail = str(error).strip() or type(error).__name__
+        self.search_errors.append(
+            redact_secrets(
+                f"{indexer.__class__.__name__}: {type(error).__name__}: {detail}"
+            )
+        )
 
     @staticmethod
     def _bounded_results(

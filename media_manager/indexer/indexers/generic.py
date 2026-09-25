@@ -5,11 +5,35 @@ from media_manager.movies.schemas import Movie
 from media_manager.tv.schemas import Show
 
 
+def describe_indexer_failure(source: str, error: BaseException) -> str:
+    """Summarise a failed upstream request without its (secret-bearing) URL."""
+    status_code = getattr(getattr(error, "response", None), "status_code", None)
+    status = f" (HTTP {status_code})" if status_code else ""
+    return f"{source}: {type(error).__name__}{status}"
+
+
 class GenericIndexer(ABC):
     name: str
 
     def __init__(self, name: str) -> None:
         self.name = name
+
+    def record_tolerated_failure(self, failure: str) -> None:
+        """Remember an upstream source that failed while the others answered.
+
+        Callers that report problems (such as the episode scanner) read and
+        clear these with ``pop_tolerated_failures``.
+        """
+        failures: list[str] | None = getattr(self, "_tolerated_failures", None)
+        if failures is None:
+            failures = []
+            self._tolerated_failures = failures
+        failures.append(failure)
+
+    def pop_tolerated_failures(self) -> list[str]:
+        failures: list[str] = getattr(self, "_tolerated_failures", None) or []
+        self._tolerated_failures = []
+        return failures
 
     @abstractmethod
     def search(self, query: str, is_tv: bool) -> list[IndexerQueryResult]:

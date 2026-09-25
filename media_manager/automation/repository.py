@@ -60,6 +60,37 @@ class AutomationRepository:
         results = (await self.db.execute(stmt)).scalars().all()
         return [AutomationJob.model_validate(job) for job in results]
 
+    async def get_pending_show_targets(
+        self,
+        show_id: ShowId,
+    ) -> tuple[set[EpisodeId], bool]:
+        """Return queued episode jobs and whether a show job is running now.
+
+        Other components use this to avoid searching for an episode that the
+        automation queue already owns.
+        """
+        stmt = select(
+            AutomationJobModel.kind,
+            AutomationJobModel.status,
+            AutomationJobModel.episode_id,
+        ).where(
+            AutomationJobModel.show_id == show_id,
+            AutomationJobModel.status.not_in(
+                [status.value for status in TERMINAL_AUTOMATION_STATUSES]
+            ),
+        )
+        episode_ids: set[EpisodeId] = set()
+        show_job_active = False
+        for kind, status, episode_id in (await self.db.execute(stmt)).all():
+            if kind == AutomationJobKind.episode.value and episode_id is not None:
+                episode_ids.add(EpisodeId(episode_id))
+            elif (
+                kind == AutomationJobKind.show.value
+                and AutomationJobStatus(status) in ACTIVE_AUTOMATION_STATUSES
+            ):
+                show_job_active = True
+        return episode_ids, show_job_active
+
     async def enqueue_movie(
         self,
         movie_id: MovieId,

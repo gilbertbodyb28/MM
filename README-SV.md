@@ -158,8 +158,69 @@ Databasmigreringar körs automatiskt vid containerstart. Discover syns i huvudme
 
 Öppna **Settings → Appearance** och slå av eller på **Dark mode**. Samma val kan ändras med snabbknappen längst ned i sidomenyn. Valet sparas automatiskt på enheten och används igen efter omladdning; ingen omstart av MediaManager behövs.
 
+## 7. Avsnittsscanner (nya avsnitt varje timme)
+
+Scannern kontrollerar alla TV-serier i biblioteket varje timme och skickar nya avsnitt till nedladdningstjänsten (qBittorrent, Transmission eller SABnzbd) via de anslutna indexerarna (Prowlarr eller Jackett). Den körs i MediaManager-servern, så den fungerar även när webbsidan är stängd.
+
+Öppna **TV Shows → Avsnittsscanner** i sidomenyn. Där finns:
+
+- **Automatisk scanning** – reglaget som slår på eller av den timvisa scanningen (på från början);
+- **Scanna nu** – startar en scanning direkt, även när automatisk scanning är avstängd;
+- senaste scanning, nästa planerade scanning och resultatet (kontrollerade serier, skickade avsnitt, avsnitt som väntar på release och fel);
+- vilka avsnitt som hittades och vad som hände med dem, de senast skickade avsnitten och en kort historik.
+
+Ett avsnitt räknas som nytt om det har sänts de senaste 14 dagarna. Avsnitt som redan finns i biblioteket, laddas ned, ligger i nedladdningskön eller redan finns i qBittorrent hoppas över för att undvika dubbletter. Serier som lagts till som **Unmonitored** och säsonger som inte övervakas kontrolleras men laddas aldrig ned automatiskt. Om något går fel för en serie eller ett avsnitt visas felet i rött på sidan, övriga serier kontrolleras som vanligt och avsnittet försöks igen vid nästa scanning.
+
+Intervall och tidsfönster kan ändras i `config.toml` (standardvärden visas):
+
+```toml
+[episode_scanner]
+interval_minutes = 60
+lookback_days = 14
+include_specials = false
+```
+
+Mer detaljer finns i `docs/advanced-features/episode-scanner.md`.
+
+## 8. Uppdatera MediaManager på din NAS
+
+Uppdateringen innehåller en databasmigrering som körs automatiskt när containern startar. Dina inställningar och ditt bibliotek ligger kvar i mapparna `config/`, `data/`, `images/` och `postgres/`, så de ska inte tas bort.
+
+1. Logga in på NAS:en med SSH och gå till mappen där MediaManager ligger (där `docker-compose.yaml` finns).
+2. Ta gärna en säkerhetskopia av databasen först:
+
+   ```bash
+   docker compose exec db pg_dump -U MediaManager MediaManager > mediamanager-backup.sql
+   ```
+
+3. Hämta den nya koden. Om mappen är en Git-klon:
+
+   ```bash
+   git fetch https://github.com/gilbertbodyb28/MM.git claude/nice-bohr-cgv1ib
+   git checkout -B episode-scanner FETCH_HEAD
+   ```
+
+   Annars: ladda ned grenen som ZIP från GitHub och kopiera in filerna över de gamla, men behåll mapparna `config/`, `data/`, `images/` och `postgres/`. Har du ändrat `docker-compose.yaml` på NAS:en (till exempel sökvägar eller portar) sparar du en kopia först och för över dina ändringar efteråt.
+
+4. Bygg om och starta om appen med samma profiler som du brukar använda, till exempel:
+
+   ```bash
+   docker compose --profile downloads up -d --build
+   ```
+
+   Använder du NAS:ens Docker-/Compose-app i webbläsaren i stället för SSH väljer du projektet och kör **bygg om / uppdatera**.
+
+5. Kontrollera att scannern har startat:
+
+   ```bash
+   docker compose logs -f mediamanager | grep -i "episode scan"
+   ```
+
+   Den första scanningen startar inom några minuter efter omstarten. Öppna sedan **TV Shows → Avsnittsscanner** för att se resultatet.
+
 ## Dokumentation
 
+- `docs/advanced-features/episode-scanner.md`
 - `docs/advanced-features/automatic-downloads.md`
 - `docs/advanced-features/discover.md`
 - `docs/advanced-features/personal-recommendations.md`

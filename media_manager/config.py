@@ -14,6 +14,7 @@ from pydantic_settings import (
 from media_manager.auth.config import AuthConfig
 from media_manager.automation.config import AutomationConfig
 from media_manager.database.config import DbConfig
+from media_manager.episode_scanner.config import EpisodeScannerConfig
 from media_manager.indexer.config import IndexerConfig
 from media_manager.integrations.config import IntegrationsConfig
 from media_manager.metadataProvider.config import MetadataProviderConfig
@@ -78,6 +79,7 @@ class MediaManagerConfig(BaseSettings):
     database: DbConfig = DbConfig()
     auth: AuthConfig = AuthConfig()
     automation: AutomationConfig = AutomationConfig()
+    episode_scanner: EpisodeScannerConfig = EpisodeScannerConfig()
     recommendations: RecommendationConfig = RecommendationConfig()
     integrations: IntegrationsConfig = IntegrationsConfig()
 

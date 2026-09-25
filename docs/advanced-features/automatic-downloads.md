@@ -94,6 +94,10 @@ The metadata refresh runs every six hours and creates newly released episode
 records. Episodes with a known future air date are ignored until that date; the
 next automation cycle then searches for any aired, unmanaged episodes.
 
+Independently of this pipeline, the hourly [episode scanner](episode-scanner.md)
+sends newly aired episodes of monitored shows to the download client and has
+its own on/off switch and status page.
+
 ## Administration API
 
 Authenticated users can inspect jobs:

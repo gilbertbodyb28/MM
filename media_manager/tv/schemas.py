@@ -28,6 +28,13 @@ class MonitorScope(StrEnum):
     SPECIFIC = "specific"
 
 
+class EpisodeFileState(StrEnum):
+    """How far an episode that already has an episode file has progressed."""
+
+    IN_LIBRARY = "in_library"
+    DOWNLOADING = "downloading"
+
+
 class Episode(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

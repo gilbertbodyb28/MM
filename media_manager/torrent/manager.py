@@ -66,6 +66,16 @@ class DownloadManager:
         if self._usenet_client:
             active_clients.append(f"usenet ({self._usenet_client.name})")
 
+    @property
+    def has_torrent_client(self) -> bool:
+        """Whether an enabled torrent client was initialised successfully."""
+        return self._torrent_client is not None
+
+    @property
+    def has_usenet_client(self) -> bool:
+        """Whether an enabled usenet client was initialised successfully."""
+        return self._usenet_client is not None
+
     def _get_appropriate_client(
         self, indexer_result: IndexerQueryResult | Torrent
     ) -> AbstractDownloadClient:

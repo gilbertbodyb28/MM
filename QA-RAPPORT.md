@@ -57,3 +57,25 @@ Konceptets rubriker `Trending`, `Coming Soon` och `Recommended for You` återges
 ## Externa beroenden
 
 Live-verifiering mot ägarens egna Prowlarr/Jackett-, qBittorrent-, Plex/Tautulli- och Ollama-instanser kräver deras privata URL:er och nycklar. Klienterna, felhanteringen, säkerhetsgränserna och orkestreringen täcks av testsviten. Paketet innehåller en lokal Discover-relay eftersom det offentliga standardreläet ännu inte exponerar samtliga nya Discover-endpoints.
+
+## Avsnittsscanner – verifierad 25 september 2026
+
+Automatiska kontroller:
+
+- Backend: 171 tester godkända, varav 39 nya för scannern (urval av nya avsnitt, dubblettskydd, övervakning, felisolering, schemaläggning, hjärtslag och maskning av hemligheter).
+- Ruff lint och format: godkända. `ty`: samma 145 äldre diagnoser som före ändringen, inga nya.
+- Svelte check: 0 fel (samma sju äldre varningar). ESLint och Prettier: godkända för de nya filerna. Produktionsbygget av SvelteKit: godkänt.
+- Alembic: uppgradering, nedgradering och ny uppgradering av `e65475fd5f91` mot PostgreSQL 16; databasfrågorna (spärr mot parallella scanningar, återhämtning efter avbrott, dubblettkontroll mot bibliotek och nedladdningskö) kontrollerade mot riktig databas.
+
+Helhetstest mot riktig FastAPI/PostgreSQL-backend med lokala test-tjänster för Prowlarr och qBittorrent och fiktiva serier:
+
+- Den schemalagda scanningen startade automatiskt vid uppstart och igen vid nästa fem-minuterstick utan att någon webbsida var öppen.
+- Nya avsnitt skickades till qBittorrent; avsnitt i biblioteket, under nedladdning, i automationskön, redan tillagda i qBittorrent och i serier som inte övervakas hoppades över. En ny scanning skickade inga dubbletter.
+- Ett indexerarfel (HTTP 429) visades tydligt för den serien medan övriga serier kontrollerades som vanligt.
+- `Scanna nu` startade en scanning (202) och ett andra klick under pågående scanning avvisades (409). Reglaget för automatisk scanning slog av och på schemat.
+- Hjärtslaget förnyades medan en långsam indexerare svarade.
+- Sidan fungerar i 1440 px och 390 px bredd utan horisontell overflow:
+  - `artifacts/ui-qa/episode-scanner.png`
+  - `artifacts/ui-qa/episode-scanner-mobile.png`
+
+Live-verifiering mot ägarens egna Prowlarr- och qBittorrent-instanser på NAS:en återstår och görs efter uppdateringen enligt README-SV, avsnitt 8.

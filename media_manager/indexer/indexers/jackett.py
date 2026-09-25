@@ -8,7 +8,10 @@ from dataclasses import dataclass
 import requests
 
 from media_manager.config import MediaManagerConfig
-from media_manager.indexer.indexers.generic import GenericIndexer
+from media_manager.indexer.indexers.generic import (
+    GenericIndexer,
+    describe_indexer_failure,
+)
 from media_manager.indexer.indexers.torznab_mixin import TorznabMixin
 from media_manager.indexer.schemas import IndexerQueryResult
 from media_manager.movies.schemas import Movie
@@ -81,6 +84,9 @@ class Jackett(GenericIndexer, TorznabMixin):
                         "Jackett search failed for indexer %s (%s)",
                         futures[future],
                         type(error).__name__,
+                    )
+                    self.record_tolerated_failure(
+                        describe_indexer_failure(futures[future], error)
                     )
 
         return responses
@@ -199,6 +205,7 @@ class Jackett(GenericIndexer, TorznabMixin):
             log.error(
                 f"Jacket error with indexer {indexer}, error: {response.status_code}"
             )
+            self.record_tolerated_failure(f"{indexer}: HTTP {response.status_code}")
             return []
 
         results = self.process_search_result(response.content)[: self.max_results]

@@ -27,6 +27,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 import media_manager.automation.router as automation_router
 import media_manager.discover.router as discover_router
 import media_manager.downloads.router as downloads_router
+import media_manager.episode_scanner.router as episode_scanner_router
 import media_manager.movies.router as movies_router
 import media_manager.recommendations.router as recommendations_router
 import media_manager.release_calendar.router as release_calendar_router
@@ -71,6 +72,7 @@ from media_manager.scheduler import (
     import_all_show_torrents_task,
     refresh_personal_recommendations_task,
     run_download_automation_task,
+    schedule_episode_scan_task,
     update_all_movies_metadata_task,
     update_all_non_ended_shows_metadata_task,
 )
@@ -122,6 +124,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 update_all_movies_metadata_task.kiq(),
                 update_all_non_ended_shows_metadata_task.kiq(),
                 run_download_automation_task.kiq(),
+                schedule_episode_scan_task.kiq(),
                 refresh_personal_recommendations_task.kiq(),
             )
         except Exception:
@@ -213,6 +216,11 @@ api_app.include_router(
     automation_router.router,
     prefix="/automation",
     tags=["automation"],
+)
+api_app.include_router(
+    episode_scanner_router.router,
+    prefix="/episode-scanner",
+    tags=["episode-scanner"],
 )
 api_app.include_router(
     discover_router.router,

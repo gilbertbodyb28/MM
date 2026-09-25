@@ -76,6 +76,10 @@
 					{
 						title: 'Torrents',
 						url: resolve('/dashboard/tv/torrents', {})
+					},
+					{
+						title: 'Avsnittsscanner',
+						url: resolve('/dashboard/tv/scanner', {})
 					}
 				]
 			},

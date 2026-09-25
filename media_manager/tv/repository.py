@@ -15,6 +15,7 @@ from media_manager.tv.models import Episode, EpisodeFile, Season, Show
 from media_manager.tv.schemas import Episode as EpisodeSchema
 from media_manager.tv.schemas import EpisodeFile as EpisodeFileSchema
 from media_manager.tv.schemas import (
+    EpisodeFileState,
     EpisodeId,
     EpisodeNumber,
     MonitorScope,
@@ -282,6 +283,32 @@ class TvRepository(BaseRepository[Show, ShowSchema]):
         )
         results = (await self.db.execute(stmt)).scalars().all()
         return {EpisodeId(episode_id) for episode_id in results}
+
+    async def get_episode_file_states(
+        self, show_id: ShowId
+    ) -> dict[EpisodeId, EpisodeFileState]:
+        """Classify managed episodes as imported or still being downloaded.
+
+        An episode file without a torrent was imported from disk (or its
+        torrent record was removed after import), so it counts as present.
+        """
+        stmt = (
+            select(
+                EpisodeFile.episode_id, EpisodeFile.torrent_id, TorrentModel.imported
+            )
+            .join(Episode, Episode.id == EpisodeFile.episode_id)
+            .join(Season, Season.id == Episode.season_id)
+            .outerjoin(TorrentModel, TorrentModel.id == EpisodeFile.torrent_id)
+            .where(Season.show_id == show_id)
+        )
+        states: dict[EpisodeId, EpisodeFileState] = {}
+        for episode_id, torrent_id, imported in (await self.db.execute(stmt)).all():
+            key = EpisodeId(episode_id)
+            if torrent_id is None or imported:
+                states[key] = EpisodeFileState.IN_LIBRARY
+            else:
+                states.setdefault(key, EpisodeFileState.DOWNLOADING)
+        return states
 
     async def get_torrents_by_show_id(self, show_id: ShowId) -> list[TorrentSchema]:
         stmt = (

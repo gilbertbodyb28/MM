@@ -100,6 +100,9 @@ def test_prowlarr_continues_when_one_indexer_is_rate_limited(
     assert "Rate Limited failed (RuntimeError)" in caplog.text
     assert "super-secret" not in caplog.text
     assert "Traceback" not in caplog.text
+    # The tolerated failure is kept (without its message) for callers that report it.
+    assert prowlarr.pop_tolerated_failures() == ["Rate Limited: RuntimeError"]
+    assert prowlarr.pop_tolerated_failures() == []
 
 
 def test_jackett_caps_results_without_logging_api_key(

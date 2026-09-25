@@ -70,6 +70,12 @@ class QbittorrentGateway:
             snapshot = cast(dict[str, Any], client.sync_maindata(rid=0))
             return delta, snapshot
 
+    def torrent_names(self) -> list[str]:
+        """Return the names of every torrent qBittorrent currently holds."""
+        with self._session() as client:
+            torrents = cast(list[Mapping[str, Any]], client.torrents_info())
+            return [str(torrent.get("name") or "") for torrent in torrents]
+
     @staticmethod
     def _require_torrent(client: qbittorrentapi.Client, torrent_hash: str) -> None:
         if not client.torrents_info(torrent_hashes=torrent_hash):

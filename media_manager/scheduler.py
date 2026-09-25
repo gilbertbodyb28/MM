@@ -1,5 +1,6 @@
 import logging
 from urllib.parse import quote
+from uuid import UUID
 
 import taskiq_fastapi
 from taskiq import TaskiqDepends, TaskiqScheduler
@@ -9,6 +10,15 @@ from taskiq_postgresql.scheduler_source import PostgresqlSchedulerSource
 
 from media_manager.automation.dependencies import get_automation_service
 from media_manager.automation.service import AutomationService
+from media_manager.episode_scanner.dependencies import (
+    get_episode_scan_runner,
+    get_episode_scan_service,
+)
+from media_manager.episode_scanner.schemas import EpisodeScanRunId
+from media_manager.episode_scanner.service import (
+    EpisodeScanRunner,
+    EpisodeScanService,
+)
 from media_manager.movies.dependencies import get_movie_service
 from media_manager.movies.service import MovieService
 from media_manager.recommendations.dependencies import get_recommendation_service
@@ -91,6 +101,34 @@ async def run_download_automation_task(
 
 
 @broker.task
+async def run_episode_scan_task(
+    run_id: str,
+    scan_runner: EpisodeScanRunner = TaskiqDepends(get_episode_scan_runner),
+) -> None:
+    """Check every TV show for new episodes and send them to the download client."""
+    await scan_runner.execute(EpisodeScanRunId(UUID(run_id)))
+
+
+@broker.task
+async def schedule_episode_scan_task(
+    scan_service: EpisodeScanService = TaskiqDepends(get_episode_scan_service),
+) -> None:
+    """Start the hourly episode scan when automatic scanning is on and due.
+
+    This check is cheap, so it runs often; the expensive scan itself runs in
+    its own task with the indexer and download-client dependencies.
+    """
+    run = await scan_service.start_scheduled_scan_if_due()
+    if run is None:
+        return
+    try:
+        await run_episode_scan_task.kiq(run_id=str(run.id))
+    except Exception as error:
+        log.exception("Could not queue scheduled episode scan %s", run.id)
+        await scan_service.mark_start_failed(run.id, error)
+
+
+@broker.task
 async def refresh_personal_recommendations_task(
     recommendation_service: RecommendationService = TaskiqDepends(
         get_recommendation_service
@@ -110,6 +148,10 @@ _STARTUP_SCHEDULES: dict[str, list[dict[str, str]]] = {
     update_all_movies_metadata_task.task_name: [{"cron": "0 0 * * 1"}],
     update_all_non_ended_shows_metadata_task.task_name: [{"cron": "0 */6 * * *"}],
     run_download_automation_task.task_name: [{"cron": "*/5 * * * *"}],
+    # The due-check runs every five minutes; the scan itself runs once per
+    # configured interval (hourly by default). Keep in sync with
+    # media_manager.episode_scanner.service.SCHEDULER_TICK_MINUTES.
+    schedule_episode_scan_task.task_name: [{"cron": "*/5 * * * *"}],
     refresh_personal_recommendations_task.task_name: [{"cron": "*/15 * * * *"}],
 }
 
