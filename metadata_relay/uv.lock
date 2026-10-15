@@ -739,14 +739,14 @@ wheels = [
 
 [[package]]
 name = "tmdbsimple"
-version = "2.9.1"
+version = "2.9.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/87/3309cb03df1c9f9895fccd87e9875050f19e2cfec5a50b9d72e50d420fc8/tmdbsimple-2.9.1.tar.gz", hash = "sha256:636eaaaec82027929e8a91c2166e01f552ec63f869bf1fcd65aa561b705c7464", size = 33772, upload-time = "2022-01-25T21:48:36.477Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/f4/275cbab0d90819bb902bb3cbc8b9ba48d0556a05b7f6f818b908e9366fbf/tmdbsimple-2.9.8.tar.gz", hash = "sha256:746904be2d5db535a74ca2ca0f3a4d3db2d7173b5b98161fa772c303a4dca0a0", size = 42963, upload-time = "2026-07-30T05:22:23.171Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/dd/ade05d202db728b23e54aa0959622d090776023917e7308c1b2469a07b76/tmdbsimple-2.9.1-py3-none-any.whl", hash = "sha256:b52387c667bad1dccf5f776a576a971622a111fc08b7f731e360fabcc9860616", size = 38954, upload-time = "2022-01-25T21:48:34.653Z" },
+    { url = "https://files.pythonhosted.org/packages/84/d2/70bdf8b6ab91eeb3c52a8c5839dd68040f11a7aa2ca23cff5c96855834dc/tmdbsimple-2.9.8-py3-none-any.whl", hash = "sha256:16055d1f8562470265b27df344ca60561573b19513af2df15bf82e677d1034fb", size = 40268, upload-time = "2026-07-30T05:22:22.118Z" },
 ]
 
 [[package]]
